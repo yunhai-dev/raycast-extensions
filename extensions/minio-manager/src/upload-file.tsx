@@ -209,6 +209,7 @@ export default function Command(props: LaunchProps<{ arguments: CommandArguments
       const toast = await showToast({
         style: Toast.Style.Animated,
         title: "Uploading file",
+        message: "0%",
       });
 
       // Get file path string
@@ -255,8 +256,27 @@ export default function Command(props: LaunchProps<{ arguments: CommandArguments
           await minioClient.makeBucket(bucket, "us-east-1");
         }
 
-        // Upload file
-        await minioClient.fPutObject(bucket, objectName, filePath, {});
+        // Get file size for progress calculation
+        const fileStats = fs.statSync(filePath);
+        const fileSize = fileStats.size;
+
+        // Use fs.createReadStream to get a readable stream
+        const fileStream = fs.createReadStream(filePath);
+
+        // Track progress manually
+        let bytesRead = 0;
+
+        // Add event listener for data chunks
+        fileStream.on("data", (chunk) => {
+          bytesRead += chunk.length;
+          const progress = Math.min(100, Math.round((bytesRead / fileSize) * 100));
+          // Update toast message with current progress
+          toast.message = `${progress}%`;
+          console.debug(`Upload progress: ${progress}% (${bytesRead}/${fileSize} bytes)`);
+        });
+
+        // Upload file using putObject with stream
+        await minioClient.putObject(bucket, objectName, fileStream, fileSize, {});
 
         // Generate public URL
         const publicUrl = generatePublicUrl(bucket, objectName);

@@ -290,9 +290,19 @@ export default function Command() {
 
         objectsStream.on("error", (err) => {
           reject(err);
+          showToast({
+            style: Toast.Style.Failure,
+            title: "Error listing objects",
+            message: err.message,
+          });
         });
 
         objectsStream.on("end", () => {
+          showToast({
+            style: Toast.Style.Success,
+            title: `Loaded ${objects.length} items`,
+            message: prefix ? `in ${prefix}` : `in bucket ${bucket}`,
+          });
           resolve();
         });
       });
@@ -303,7 +313,7 @@ export default function Command() {
         if (!a.isDirectory && b.isDirectory) return 1;
         return a.name.localeCompare(b.name);
       });
-
+      console.log(objects);
       setObjects(objects);
     } catch (err) {
       console.error("Error listing objects:", err);
@@ -377,7 +387,7 @@ export default function Command() {
       });
 
       // Refresh list
-      listObjects(currentBucket, currentPrefix);
+      await listObjects(currentBucket, currentPrefix);
     } catch (err) {
       console.error("Error deleting object:", err);
       await showToast({
@@ -403,6 +413,21 @@ export default function Command() {
   useEffect(() => {
     listObjects(currentBucket, currentPrefix);
   }, []);
+
+  const getFileIcon = (fileName: string): string => {
+    const ext = path.extname(fileName).toLowerCase();
+    if (IMAGE_EXTENSIONS.includes(ext)) {
+      return Icon.Image;
+    } else if (AUDIO_EXTENSIONS.includes(ext)) {
+      return Icon.Music;
+    } else if (VIDEO_EXTENSIONS.includes(ext)) {
+      return Icon.Video;
+    } else if (TEXT_EXTENSIONS.includes(ext)) {
+      return Icon.Text;
+    } else {
+      return Icon.Document;
+    }
+  };
 
   return (
     <List
@@ -457,7 +482,7 @@ export default function Command() {
             key={obj.name}
             title={path.basename(obj.name)}
             subtitle={obj.isDirectory ? "Directory" : formatFileSize(obj.size)}
-            icon={obj.isDirectory ? Icon.Folder : Icon.Document}
+            icon={obj.isDirectory ? Icon.Folder : getFileIcon(obj.name)}
             accessories={[
               {
                 text: obj.isDirectory ? "" : new Date(obj.lastModified).toLocaleDateString(),
@@ -491,6 +516,12 @@ export default function Command() {
                       icon={Icon.Link}
                       shortcut={{ modifiers: ["cmd", "shift"], key: "return" }}
                       onAction={() => downloadAndOpenFile(obj)}
+                    />
+                    <Action
+                      title="Reload"
+                      icon={Icon.ArrowClockwise}
+                      shortcut={{ modifiers: ["cmd"], key: "r" }}
+                      onAction={() => listObjects(currentBucket, currentPrefix)}
                     />
                     <Action.CopyToClipboard
                       title="Copy Object Name"
@@ -590,7 +621,7 @@ function SimplePreviewLoader(props: { objectName: string; objectSize: number; bu
         const publicUrl = generatePublicUrl(bucket, objectName) || "";
         const fileName = path.basename(objectName);
 
-        let fileType = "Unknown";
+        let fileType: string;
         if (IMAGE_EXTENSIONS.includes(ext)) {
           fileType = `Image (${ext.substring(1)})`;
         } else if (AUDIO_EXTENSIONS.includes(ext)) {

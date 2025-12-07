@@ -1,7 +1,14 @@
 # MinIO Manager Changelog
 
-## [Optimize interactions] - 2025-08-18
+## [Add Upload Progress] - 2025-12-08
+- Added real-time upload progress display
+- Improved user experience with animated toast notifications
+- Fixed NaN progress display issue
+- Changed progress display from form to toast notifications
+- Implemented smooth progress transition from 0% to 100%
+- Added detailed progress logging for debugging
 
+## [Optimize interactions] - 2025-08-18
 - Deleting prompts is more in line with interaction habits
 
 ## [Initial Version] - 2025-06-24
