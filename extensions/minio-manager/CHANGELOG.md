@@ -1,6 +1,6 @@
 # MinIO Manager Changelog
 
-## [Add Upload Progress] - 2025-12-08
+## [Add Upload Progress] - {PR_MERGE_DATE}
 - Added real-time upload progress display
 - Improved user experience with animated toast notifications
 - Fixed NaN progress display issue
