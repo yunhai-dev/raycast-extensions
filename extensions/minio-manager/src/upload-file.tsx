@@ -15,6 +15,10 @@ import * as Minio from "minio";
 import * as fs from "fs";
 import * as path from "path";
 import { promisify } from "util";
+import * as http from "http";
+import * as https from "https";
+import { URL } from "url";
+import { ProgressStream, ProgressStats } from "./ProgressStream";
 
 // Convert fs.access to a Promise-based version
 const accessAsync = promisify(fs.access);
@@ -260,23 +264,44 @@ export default function Command(props: LaunchProps<{ arguments: CommandArguments
         const fileStats = fs.statSync(filePath);
         const fileSize = fileStats.size;
 
-        // Use fs.createReadStream to get a readable stream
-        const fileStream = fs.createReadStream(filePath);
+        // Generate presigned URL for upload to avoid client-side buffering
+        const presignedUrl = await minioClient.presignedPutObject(bucket, objectName, 24 * 60 * 60);
 
-        // Track progress manually
-        let bytesRead = 0;
+        await new Promise<void>((resolve, reject) => {
+          const fileStream = fs.createReadStream(filePath);
 
-        // Add event listener for data chunks
-        fileStream.on("data", (chunk) => {
-          bytesRead += chunk.length;
-          const progress = Math.min(100, Math.round((bytesRead / fileSize) * 100));
-          // Update toast message with current progress
-          toast.message = `${progress}%`;
-          console.debug(`Upload progress: ${progress}% (${bytesRead}/${fileSize} bytes)`);
+          const progressStream = new ProgressStream(fileSize, {
+            onProgress: (stats: ProgressStats) => {
+              toast.message = `${stats.percentage}%`;
+              console.debug(`Upload progress: ${stats.percentage}% (${stats.transferred}/${stats.total} bytes)`);
+            },
+          });
+
+          const parsedUrl = new URL(presignedUrl);
+          const options = {
+            method: "PUT",
+            headers: {
+              "Content-Length": fileSize,
+            },
+          };
+
+          const requestModule = parsedUrl.protocol === "https:" ? https : http;
+
+          const req = requestModule.request(presignedUrl, options, (res) => {
+            res.resume(); // Consume response
+            if (res.statusCode && res.statusCode >= 200 && res.statusCode < 300) {
+              resolve();
+            } else {
+              reject(new Error(`Upload failed with status code: ${res.statusCode}`));
+            }
+          });
+
+          req.on("error", (err) => {
+            reject(err);
+          });
+
+          fileStream.pipe(progressStream).pipe(req);
         });
-
-        // Upload file using putObject with stream
-        await minioClient.putObject(bucket, objectName, fileStream, fileSize, {});
 
         // Generate public URL
         const publicUrl = generatePublicUrl(bucket, objectName);

@@ -313,7 +313,7 @@ export default function Command() {
         if (!a.isDirectory && b.isDirectory) return 1;
         return a.name.localeCompare(b.name);
       });
-      console.log(objects);
+
       setObjects(objects);
     } catch (err) {
       console.error("Error listing objects:", err);
