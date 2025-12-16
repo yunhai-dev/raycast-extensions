@@ -1,6 +1,21 @@
 # MinIO Manager Changelog
 
-## [Add Upload Progress] - {PR_MERGE_DATE}
+## [Enhanced Upload & File List] - {PR_MERGE_DATE}
+
+### Upload Improvements
+- Implemented concurrent multipart upload for large files
+- Added real network upload progress tracking using presigned URLs
+- Added configurable upload settings (part size, concurrency, max file size, retry count)
+- Added retry logic for failed parts with user choice to retry or abort
+- Added cancel upload support
+
+### File List Improvements
+- Implemented S3 native server-side pagination using `startAfter` parameter
+- Implemented S3 server-side search using `prefix` parameter
+- Added loading toast indicator for "Load More" action
+- Improved navigation with search state clearing
+
+## [Add Upload Progress] - 2025-12-08
 - Added real-time upload progress display
 - Improved user experience with animated toast notifications
 - Fixed NaN progress display issue

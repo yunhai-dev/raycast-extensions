@@ -103,6 +103,51 @@
       "default": true,
       "required": false,
       "label": "Auto Copy URL"
+    },
+    {
+      "name": "maxFileSize",
+      "title": "Max File Size (MB)",
+      "description": "Maximum file size allowed for upload in megabytes",
+      "type": "textfield",
+      "default": "1024",
+      "required": false,
+      "placeholder": "1024"
+    },
+    {
+      "name": "partSize",
+      "title": "Part Size (MB)",
+      "description": "Size of each part for multipart upload (minimum 5MB)",
+      "type": "textfield",
+      "default": "5",
+      "required": false,
+      "placeholder": "5"
+    },
+    {
+      "name": "concurrency",
+      "title": "Upload Concurrency",
+      "description": "Number of concurrent upload threads for multipart upload",
+      "type": "textfield",
+      "default": "4",
+      "required": false,
+      "placeholder": "4"
+    },
+    {
+      "name": "retryCount",
+      "title": "Retry Count",
+      "description": "Number of retries for failed upload parts",
+      "type": "textfield",
+      "default": "3",
+      "required": false,
+      "placeholder": "3"
+    },
+    {
+      "name": "pageSize",
+      "title": "Page Size",
+      "description": "Number of items to display per page in file list",
+      "type": "textfield",
+      "default": "100",
+      "required": false,
+      "placeholder": "100"
     }
   ],
   "dependencies": {
